@@ -1,5 +1,8 @@
 FROM runpod/worker-comfyui:5.5.1-base
 
+# Ждём сеть (ВАЖНО! Без этого git clone может не сработать)
+RUN sleep 20
+
 # Установка git
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
@@ -14,11 +17,9 @@ RUN git clone https://github.com/kijai/ComfyUI-KJNodes.git
 # Установка Python-пакетов
 RUN pip install --no-cache-dir opencv-python accelerate gguf runpod requests
 
-# Скачивание моделей (опционально, если не используешь Network Volume)
-
 # Копирование handler и workflow
 COPY handler.py /handler.py
-COPY Wan22-I2V-Remix-100.json /comfyui/workflow.json
+COPY workflow_api.json /comfyui/workflow.json
 
 # Запуск handler
 CMD ["python", "-u", "/handler.py"]

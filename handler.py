@@ -51,41 +51,55 @@ def handler(job):
         print(f"Сохранено изображение: {img_name}")
     
     # ============================================
-    # КЛЮЧЕВОЙ МОМЕНТ: ОТПРАВКА WORKFLOW
+    # ОТПРАВКА WORKFLOW В COMFYUI
     # ============================================
     print("Отправка workflow в ComfyUI...")
-    response = requests.post("http://localhost:8188/prompt", json={"prompt": workflow})
     
-    if response.status_code != 200:
-        return {"error": f"ComfyUI error: {response.text}"}
+    try:
+        response = requests.post("http://localhost:8188/prompt", json={"prompt": workflow}, timeout=30)
+        print(f"HTTP статус: {response.status_code}")
+        print(f"Ответ ComfyUI: {response.text[:500]}")
+        
+        if response.status_code != 200:
+            return {"error": f"ComfyUI error: {response.text}"}
+        
+        result = response.json()
+        prompt_id = result.get('prompt_id')
+        
+        if not prompt_id:
+            return {"error": f"No prompt_id in response: {result}"}
+        
+        print(f"Prompt ID: {prompt_id}")
+        
+    except Exception as e:
+        return {"error": f"Failed to send workflow: {str(e)}"}
     
-    prompt_id = response.json()['prompt_id']
-    print(f"Prompt ID: {prompt_id}")
-    
-    # Ожидание результата (до 40 минут)
+    # Ожидание результата
     print("Ожидание генерации видео...")
     for _ in range(1200):
         time.sleep(2)
-        history_resp = requests.get(f"http://localhost:8188/history/{prompt_id}")
-        
-        if history_resp.status_code == 200:
-            history = history_resp.json()
-            if prompt_id in history:
-                outputs = history[prompt_id]['outputs']
-                print(f"Outputs: {json.dumps(outputs, indent=2)}")
-                
-                for node_id, node_output in outputs.items():
-                    if 'videos' in node_output and node_output['videos']:
-                        video = node_output['videos'][0]
-                        video_url = f"http://localhost:8188/view?filename={video['filename']}&type=output"
-                        print(f"Видео сгенерировано: {video_url}")
-                        return {"status": "completed", "video_url": video_url}
+        try:
+            history_resp = requests.get(f"http://localhost:8188/history/{prompt_id}", timeout=10)
+            if history_resp.status_code == 200:
+                history = history_resp.json()
+                if prompt_id in history:
+                    outputs = history[prompt_id]['outputs']
+                    print(f"Outputs: {json.dumps(outputs, indent=2)}")
                     
-                    if 'images' in node_output and node_output['images']:
-                        img = node_output['images'][0]
-                        img_url = f"http://localhost:8188/view?filename={img['filename']}&type=output"
-                        print(f"Изображение сгенерировано: {img_url}")
-                        return {"status": "completed", "image_url": img_url}
+                    for node_id, node_output in outputs.items():
+                        if 'videos' in node_output and node_output['videos']:
+                            video = node_output['videos'][0]
+                            video_url = f"http://localhost:8188/view?filename={video['filename']}&type=output"
+                            print(f"Видео сгенерировано: {video_url}")
+                            return {"status": "completed", "video_url": video_url}
+                        
+                        if 'images' in node_output and node_output['images']:
+                            img = node_output['images'][0]
+                            img_url = f"http://localhost:8188/view?filename={img['filename']}&type=output"
+                            print(f"Изображение сгенерировано: {img_url}")
+                            return {"status": "completed", "image_url": img_url}
+        except Exception as e:
+            print(f"Ошибка при проверке статуса: {e}")
     
     return {"error": "Generation timeout (40 minutes)"}
 

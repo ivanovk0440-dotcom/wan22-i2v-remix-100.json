@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir opencv-python accelerate gguf runpod requests
 
 # Копирование handler и workflow
 COPY handler.py /handler.py
-COPY workflow_api.json /comfyui/workflow.json
+COPY Wan22-I2V-Remix-100.json /comfyui/workflow.json
 
 # Запуск handler
 CMD ["python", "-u", "/handler.py"]

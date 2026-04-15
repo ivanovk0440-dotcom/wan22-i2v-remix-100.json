@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir opencv-python==4.13.0.92 \
 
 # Копируем твой handler и workflow
 COPY handler.py /handler.py
-COPY Wan22-I2V-Remix-100.json /comfyui/workflow.json
+COPY Wan22-I2V-Remix-100-API.json /comfyui/workflow.json
 
 # Копируем конфиг extra_model_paths.yaml
 COPY extra_model_paths.yaml /comfyui/extra_model_paths.yaml

@@ -1,5 +1,5 @@
 # Используем официальный образ ComfyUI от RunPod
-FROM runpod/workers:comfyui-base
+FROM runpod/worker-comfyui:5.5.1-base
 
 # Даем сети время для стабильной работы
 RUN sleep 20

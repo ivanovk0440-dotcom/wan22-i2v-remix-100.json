@@ -3,12 +3,41 @@ import requests
 import time
 import json
 import base64
+import subprocess
 import os
+
+comfy_process = None
+
+def start_comfy():
+    global comfy_process
+    if comfy_process is None:
+        print("Starting ComfyUI...")
+        comfy_process = subprocess.Popen(
+            ["python", "/comfyui/main.py", "--listen", "0.0.0.0", "--port", "8188"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        # Ждём запуска ComfyUI (до 60 секунд)
+        for i in range(30):
+            try:
+                requests.get("http://localhost:8188", timeout=2)
+                print("ComfyUI is ready!")
+                return True
+            except:
+                print(f"Waiting for ComfyUI... {i+1}/30")
+                time.sleep(2)
+        print("Error: ComfyUI failed to start")
+        return False
+    return True
 
 def handler(event):
     print("Worker Start")
-    input_data = event['input']
     
+    # Запускаем ComfyUI если ещё не запущен
+    if not start_comfy():
+        return {"error": "ComfyUI failed to start"}
+    
+    input_data = event['input']
     workflow = input_data.get('workflow')
     images = input_data.get('images', [])
     
@@ -34,7 +63,7 @@ def handler(event):
     print(f"Prompt ID: {prompt_id}")
     
     # Ждём результат
-    for _ in range(600):  # 20 минут максимум
+    for _ in range(600):
         time.sleep(2)
         history = requests.get(f"http://localhost:8188/history/{prompt_id}").json()
         

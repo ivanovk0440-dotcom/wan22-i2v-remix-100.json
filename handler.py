@@ -3,11 +3,9 @@ import requests
 import time
 import json
 import base64
+import os
 
 def handler(event):
-    """
-    Простой хендлер как в документации RunPod
-    """
     print("Worker Start")
     input_data = event['input']
     
@@ -17,7 +15,7 @@ def handler(event):
     if not workflow:
         return {"error": "Workflow is required"}
     
-    # Сохраняем изображения, если есть
+    # Сохраняем изображения
     for img in images:
         img_name = img.get('name', 'image.jpg')
         img_data = base64.b64decode(img.get('image'))
@@ -25,7 +23,7 @@ def handler(event):
             f.write(img_data)
         print(f"Saved image: {img_name}")
     
-    # Отправляем workflow в ComfyUI (который уже запущен)
+    # Отправляем workflow в ComfyUI
     print("Sending workflow to ComfyUI...")
     response = requests.post("http://localhost:8188/prompt", json={"prompt": workflow})
     
@@ -42,7 +40,7 @@ def handler(event):
         
         if prompt_id in history:
             outputs = history[prompt_id]['outputs']
-            print(f"Outputs found: {list(outputs.keys())}")
+            print(f"Outputs: {list(outputs.keys())}")
             
             for node_id, node_output in outputs.items():
                 if 'videos' in node_output and node_output['videos']:

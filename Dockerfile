@@ -1,42 +1,30 @@
-FROM runpod/worker-comfyui:5.5.1-base
+# Используем официальный образ ComfyUI от RunPod
+FROM runpod/workers:comfyui-base-1.4.0
 
-# Ждём сеть (критически важно для git clone)
-RUN sleep 30
+# Даем сети время для стабильной работы
+RUN sleep 20
 
-# Установка gt и системных зависимостей
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
-
-# Установка Python-зависимостей для WanVideoWrapper
-RUN pip install --no-cache-dir opencv-python accelerate gguf runpod requests
-
-# Клонирование кастомных нод с приоритетом WanVideoWrapper
+# Клонируем недостающие кастомные ноды
 WORKDIR /comfyui/custom_nodes
+RUN git clone https://github.com/kijai/ComfyUI-WanVideoWrapper.git
+RUN git clone https://github.com/fannovel16/ComfyUI-Frame-Interpolation.git
+RUN git clone https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git
+RUN git clone https://github.com/yolain/ComfyUI-Easy-Use.git
 
-# Попытка 1: Прямое клонирование
-RUN git clone https://github.com/kijai/ComfyUI-WanVideoWrapper.git || \
-    git clone https://gitcode.com/GitHub_Trending/co/ComfyUI-WanVideoWrapper.git || \
-    echo "WARNING: Could not clone WanVideoWrapper"
+# Устанавливаем Python-пакеты (соответствуют твоему поду)
+RUN pip install --no-cache-dir opencv-python==4.13.0.92 \
+    sentencepiece==0.2.1 \
+    accelerate \
+    gguf \
+    runpod \
+    requests
 
-# Если клонирование не удалось, используем альтернативный форк
-RUN if [ ! -d "ComfyUI-WanVideoWrapper" ]; then \
-        git clone https://github.com/sienadrayy/ComfyUI-WanVideoWrapper.git || \
-        git clone https://github.com/siraxe/ComfyUI-WanVideoWrapper_QQ.git; \
-    fi
-
-# Клонирование остальных нод (опционально)
-RUN git clone https://github.com/fannovel16/ComfyUI-Frame-Interpolation.git || true
-RUN git clone https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git || true
-RUN git clone https://github.com/yolain/ComfyUI-Easy-Use.git || true
-RUN git clone https://github.com/kijai/ComfyUI-KJNodes.git || true
-
-# Установка зависимостей для WanVideoWrapper
-RUN if [ -d "ComfyUI-WanVideoWrapper" ]; then \
-        cd ComfyUI-WanVideoWrapper && pip install --no-cache-dir -r requirements.txt || true; \
-    fi
-
-# Копирование и handler и workflow
+# Копируем твой handler и workflow
 COPY handler.py /handler.py
-COPY Wan22-I2V-Remix-100-API.json /comfyui/workflow.json
+COPY Wan22-I2V-Remix-100.json /comfyui/workflow.json
 
-# Запуск handler
+# Копируем конфиг extra_model_paths.yaml
+COPY extra_model_paths.yaml /comfyui/extra_model_paths.yaml
+
+# Запускаем handler
 CMD ["python", "-u", "/handler.py"]

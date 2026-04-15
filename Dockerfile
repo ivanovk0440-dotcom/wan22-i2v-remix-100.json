@@ -3,7 +3,7 @@ FROM runpod/worker-comfyui:5.5.1-base
 # Ждём сеть (критически важно для git clone)
 RUN sleep 30
 
-# Установка git и системных зависимостей
+# Установка gt и системных зависимостей
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
 # Установка Python-зависимостей для WanVideoWrapper

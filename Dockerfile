@@ -36,7 +36,7 @@ RUN if [ -d "ComfyUI-WanVideoWrapper" ]; then \
 
 # Копирование и handler и workflow
 COPY handler.py /handler.py
-COPY Wan22-I2V-Remix-100.json /comfyui/workflow.json
+COPY Wan22-I2V-Remix-100-API.json /comfyui/workflow.json
 
 # Запуск handler
 CMD ["python", "-u", "/handler.py"]

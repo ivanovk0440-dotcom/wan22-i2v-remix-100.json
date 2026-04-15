@@ -34,7 +34,7 @@ RUN if [ -d "ComfyUI-WanVideoWrapper" ]; then \
         cd ComfyUI-WanVideoWrapper && pip install --no-cache-dir -r requirements.txt || true; \
     fi
 
-# Копирование handler и workflow
+# Копирование и handler и workflow
 COPY handler.py /handler.py
 COPY Wan22-I2V-Remix-100.json /comfyui/workflow.json
 
